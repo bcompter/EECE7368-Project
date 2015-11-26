@@ -50,7 +50,8 @@ int main()
   // start timing
   gettimeofday(&start, NULL);
   
-  for (i = 1 ; i < nFrames ; i++)  {
+  for (i = 1 ; i < nFrames ; i++)  
+  {
     gettimeofday(&imgRead_start, NULL);
     //sprintf(fnamein, "huntington/huntington_1080p_60fps_%d.pgm", i+1);
     sprintf(fnamein, "huntington_1280/huntington_1080p_60fps_%d.pgm", i+1);
@@ -65,7 +66,7 @@ int main()
     KLTReplaceLostFeatures(tc, img2, ncols, nrows, fl);
 #endif
     KLTStoreFeatureList(fl, ft, i);
-  }
+  }  // end for number of frames...
 
   // end timing
   gettimeofday(&end, NULL);

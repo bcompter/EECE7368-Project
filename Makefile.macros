@@ -1,0 +1,73 @@
+# Makefile.macros 
+# Digicam example global definitions and rules
+#
+
+
+# --- Global Definitions -------------------------------------------------
+
+# output file name
+TESTFILE =	test.jpg
+
+# reference file name 
+GOLDFILE =	golden.jpg
+
+# --- 
+
+SCE_PATH	= $(SPECC)
+
+# --- Utilities
+
+CP		= cp -f
+RM		= rm -f
+LINK		= ln -f -s
+MKDIR		= mkdir -p
+CHMOD		= chmod
+CHGRP		= chgrp
+TAR		= gtar
+SED		= sed
+SORT		= sort
+ECHO		= echo
+CC              = gcc
+CMP             = diff -s
+RM              = rm -f
+
+
+
+# --- Global Rules ------------------------------------------------------
+# do not insert any rule before "makefile.macros.default.rule"
+#
+# trigger the default rule (called "default") that is part of the 
+# Makefile which includes us if no specific rule is defined. 
+.PHONY: makefile.macros.default.rule
+makefile.macros.default.rule: default 
+
+
+# test if specc environment variable is se
+chkspecc:
+	@set -e ; if [ -z "$(SPECC)" ]; then \
+	echo "SPECC environment variable not set!"; \
+	echo " Did you:    source setup_env.[c]sh???  "; \
+	exit 1; \
+	fi
+
+
+# --- SpecC rules --------------------------------------------------------
+
+
+.SUFFIXES:
+.SUFFIXES:	.sc .cc .o .sir
+
+.sc.cc:
+	$(SPECC_ENV) $(SCC) $* -sc2cch $(SCCOPT)
+
+.cc.o:
+	$(SPECC_ENV) $(SCC) $* -cc2o $(SCCOPT)
+
+.o:
+	$(SPECC_ENV) $(SCC) $* -o2out $(SCCOPT)
+
+.cc:
+	$(SPECC_ENV) $(SCC) $* -cc2out $(SCCOPT)
+
+.sc:
+	$(SPECC_ENV) $(SCC) $* -sc2out $(SCCOPT)
