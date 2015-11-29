@@ -44,6 +44,7 @@ int main()
   img1 = pgmReadFile("huntington_1280/huntington_1080p_60fps_1.pgm",
       NULL, &ncols, &nrows);
   img2 = (unsigned char *) malloc(ncols*nrows*sizeof(unsigned char));
+	printf("");
 
   KLTSelectGoodFeatures(tc, img1, ncols, nrows, fl);
 
@@ -53,7 +54,6 @@ int main()
   for (i = 1 ; i < nFrames ; i++)  
   {
     gettimeofday(&imgRead_start, NULL);
-    //sprintf(fnamein, "huntington/huntington_1080p_60fps_%d.pgm", i+1);
     sprintf(fnamein, "huntington_1280/huntington_1080p_60fps_%d.pgm", i+1);
     pgmReadFile(fnamein, img2, &ncols, &nrows);
 
