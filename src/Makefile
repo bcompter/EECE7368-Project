@@ -5,7 +5,7 @@
 
 
 # name of the design and of the top level file 
-DESIGN          = digicam
+DESIGN          = main
 
 
 # list all your *.sc files
@@ -29,7 +29,7 @@ SCCLIB		=
 
 
 # get common definitions
-include ../Makefile.macros 
+include ./Makefile.macros 
 
 
 
@@ -45,8 +45,7 @@ $(DESIGN): $(HEADERS) $(SOURCES)
 
 # compare output against golden reference
 test: $(DESIGN)
-	./$(DESIGN) 
-	$(CMP) $(TESTFILE) $(GOLDFILE)
+	./$(DESIGN)
 
 clean:
 	-$(RM) *~ *.o

@@ -26,6 +26,7 @@ behavior Main
 	// Queue between stimulus and design
 	const unsigned long qSize = 1024;
   	c_queue bytesToDesign(qSize);
+	c_queue bytesToMonitor(qSize);
 
 	// Trigger Read to start
   	c_handshake start;
@@ -33,7 +34,7 @@ behavior Main
     // Behaviors
   	Stimulus stimulus(imageBuffer, bytesToDesign);
 	Design design(bytesToDesign);
-  	Monitor monitor();
+  	Monitor monitor(bytesToMonitor);
 
   // Main application entry point
   int main(void) 

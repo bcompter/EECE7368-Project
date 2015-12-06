@@ -6,7 +6,9 @@
 #include <time.h>
 #include <sim.sh>
 
-behavior Monitor() 
+import "i_receiver";
+
+behavior Monitor(i_receiver bytes) 
 {
   
   void main(void) 

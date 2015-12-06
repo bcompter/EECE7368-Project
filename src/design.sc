@@ -4,7 +4,9 @@
 #include <stdio.h>
 #include <sim.sh>
 
-behavior Design() 
+import "i_receiver";
+
+behavior Design(i_receiver bytesFromStimulus) 
 {    
 
   	void main(void) 

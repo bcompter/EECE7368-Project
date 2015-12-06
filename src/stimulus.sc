@@ -5,7 +5,13 @@
 #include <stdlib.h>
 #include <sim.sh>
 
-behavior Stimulus(imageBuffer, bytesToDesign)
+/* Our common defines */
+#include "main.sh"
+
+import "i_sender";
+
+behavior Stimulus(unsigned char imageBuffer[NUM_ROWS*NUM_COLS*sizeof(unsigned char)], 
+	i_sender bytesToDesign)
 {  
 
 /*********************************************************************
@@ -20,14 +26,44 @@ behavior Stimulus(imageBuffer, bytesToDesign)
 #include <stdlib.h>  /* malloc(), atoi() */
 
 /* Our includes */
-#include "error.h"
+//#include "error.h"
 
 #define LENGTH 80
+
+/*********************************************************************
+ * KLTError
+ * 
+ * Prints an error message and dies.
+ * 
+ * INPUTS
+ * exactly like printf
+ */
+
+void KLTError(char *fmt, ...)
+{
+  printf("ERROR...\n");
+  exit(1);
+}
+
+
+/*********************************************************************
+ * KLTWarning
+ * 
+ * Prints a warning message.
+ * 
+ * INPUTS
+ * exactly like printf
+ */
+
+void KLTWarning(char *fmt, ...)
+{
+  printf("WARNING...\n");
+}
 
 
 /*********************************************************************/
 
-static void _getNextString(
+void _getNextString(
   FILE *fp,
   char *line)
 {
@@ -173,37 +209,22 @@ void ppmReadHeaderFile(
  * NOTE:  If img is NULL, memory is allocated.
  */
 
-unsigned char* pgmRead(
-  FILE *fp,
-  unsigned char *img,
-  int *ncols, int *nrows)
+void pgmRead(FILE *fp)
 {
-  unsigned char *ptr;
   int magic, maxval;
-  int i;
+  int i, index;
+  int nCols, nRows;
 
   /* Read header */
-  pgmReadHeader(fp, &magic, ncols, nrows, &maxval);
-
-  /* Allocate memory, if necessary, and set pointer */
-  if (img == NULL)  {
-    ptr = (unsigned char *) malloc(*ncols * *nrows * sizeof(char));
-    if (ptr == NULL)  
-      KLTError("(pgmRead) Memory not allocated");
-  }
-  else
-    ptr = img;
+  pgmReadHeader(fp, &magic, &nCols, &nRows, &maxval);
 
   /* Read binary image data */
+  for (i = 0 ; i < NUM_ROWS ; i++)  
   {
-    unsigned char *tmpptr = ptr;
-    for (i = 0 ; i < *nrows ; i++)  {
-      fread(tmpptr, *ncols, 1, fp);
-      tmpptr += *ncols;
-    }
+    fread(&imageBuffer[index], NUM_COLS, 1, fp);
+    index += NUM_COLS;
   }
 
-  return ptr;
 }
 
 
@@ -213,12 +234,8 @@ unsigned char* pgmRead(
  * NOTE:  If img is NULL, memory is allocated.
  */
 
-unsigned char* pgmReadFile(
-  char *fname,
-  unsigned char *img,
-  int *ncols, int *nrows)
+void pgmReadFile(char *fname)
 {
-  unsigned char *ptr;
   FILE *fp;
 
   /* Open file */
@@ -226,12 +243,10 @@ unsigned char* pgmReadFile(
     KLTError("(pgmReadFile) Can't open file named '%s' for reading\n", fname);
 
   /* Read file */
-  ptr = pgmRead(fp, img, ncols, nrows);
+  pgmRead(fp);
 
   /* Close file */
   fclose(fp);
-
-  return ptr;
 }
 
 
@@ -340,23 +355,26 @@ void ppmWriteFileRGB(
   fclose(fp);
 }
 
-  // Read input files and pass frame data to the design behavior using a queue
+  /** 
+   * Read input files and pass frame data to the design behavior using a queue
+   */
   void main(void)
   {
   
-  char fnamein[100], fnameout[100];
+  	char fnamein[100], fnameout[100];
+  	int i, ii;
   	
   	// Loop over all frames
-  	for (int i = 0; i < NUM_FRAMES; i++)
+  	for (i = 0; i < NUM_FRAMES; i++)
   	{
   		// Load the frame data
   		sprintf(fnamein, "huntington_1280/huntington_1080p_60fps_%d.pgm", i+1);
-    	pgmReadFile(fnamein, frameBuffer);
+    	pgmReadFile(fnamein);
   		
   		// Send the to queue
-  		for (int ii = 0; ii < NUM_ROWS*NUM_COLS; ii++)
+  		for (ii = 0; ii < NUM_ROWS*NUM_COLS; ii++)
   		{
-  			bytesToDesign.send(imageBuffer[ii], sizeof(char));
+  			bytesToDesign.send(&imageBuffer[ii], sizeof(char));
   			
   		}  // end of loading the queue
   		
