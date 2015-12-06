@@ -21,7 +21,7 @@ import "c_double_handshake";
 behavior Main 
 {  
 	// Global storage for frame data
-	unsigned char imageBuffer[NUM_ROWS*NUM_COLS*sizeof(unsigned char)];
+	char imageBuffer[NUM_ROWS*NUM_COLS*sizeof(unsigned char)];
 
 	// Queue between stimulus and design
 	const unsigned long qSize = 1024;

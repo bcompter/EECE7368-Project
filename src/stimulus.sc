@@ -10,7 +10,7 @@
 
 import "i_sender";
 
-behavior Stimulus(unsigned char imageBuffer[NUM_ROWS*NUM_COLS*sizeof(unsigned char)], 
+behavior Stimulus(char imageBuffer[NUM_ROWS*NUM_COLS*sizeof(unsigned char)], 
 	i_sender bytesToDesign)
 {  
 
@@ -41,7 +41,7 @@ behavior Stimulus(unsigned char imageBuffer[NUM_ROWS*NUM_COLS*sizeof(unsigned ch
 
 void KLTError(char *fmt, ...)
 {
-  printf("ERROR...\n");
+  printf("*** ERROR...\n");
   exit(1);
 }
 
@@ -100,8 +100,13 @@ void pnmReadHeader(
   /* Read magic number */
   _getNextString(fp, line);
   if (line[0] != 'P')
+  {
+  printf("(pnmReadHeader) Magic number does not begin with 'P', "
+             "but with a '%c'", line[0]);
     KLTError("(pnmReadHeader) Magic number does not begin with 'P', "
              "but with a '%c'", line[0]);
+    
+  }
   sscanf(line, "P%d", magic);
 	
   /* Read size, skipping comments */
@@ -110,9 +115,14 @@ void pnmReadHeader(
   _getNextString(fp, line);
   *nrows = atoi(line);
   if (*ncols < 0 || *nrows < 0 || *ncols > 10000 || *nrows > 10000)
+  {
+    printf("(pnmReadHeader) The dimensions %d x %d are unacceptable",
+             *ncols, *nrows);
     KLTError("(pnmReadHeader) The dimensions %d x %d are unacceptable",
              *ncols, *nrows);
-	
+    
+  }
+  
   /* Read maxval, skipping comments */
   _getNextString(fp, line);
   *maxval = atoi(line);
@@ -135,7 +145,11 @@ void pgmReadHeader(
 {
   pnmReadHeader(fp, magic, ncols, nrows, maxval);
   if (*magic != 5)
+  {
+    printf("(pgmReadHeader) Magic number is not 'P5', but 'P%d'", *magic);
     KLTError("(pgmReadHeader) Magic number is not 'P5', but 'P%d'", *magic);
+    
+  }
 }
 
 
@@ -151,7 +165,11 @@ void ppmReadHeader(
 {
   pnmReadHeader(fp, magic, ncols, nrows, maxval);
   if (*magic != 6)
+  {
+    printf("(ppmReadHeader) Magic number is not 'P6', but 'P%d'", *magic);
     KLTError("(ppmReadHeader) Magic number is not 'P6', but 'P%d'", *magic);
+    
+  }
 }
 
 
@@ -169,8 +187,11 @@ void pgmReadHeaderFile(
 
   /* Open file */
   if ( (fp = fopen(fname, "rb")) == NULL)
+  {
+    printf("(pgmReadHeaderFile) Can't open file named '%s' for reading\n", fname);
     KLTError("(pgmReadHeaderFile) Can't open file named '%s' for reading\n", fname);
-
+  }
+  
   /* Read header */
   pgmReadHeader(fp, magic, ncols, nrows, maxval);
 
@@ -193,8 +214,11 @@ void ppmReadHeaderFile(
 
   /* Open file */
   if ( (fp = fopen(fname, "rb")) == NULL)
+  {
+   printf("(ppmReadHeaderFile) Can't open file named '%s' for reading\n", fname);
     KLTError("(ppmReadHeaderFile) Can't open file named '%s' for reading\n", fname);
-
+   
+  }
   /* Read header */
   ppmReadHeader(fp, magic, ncols, nrows, maxval);
 
@@ -212,17 +236,27 @@ void ppmReadHeaderFile(
 void pgmRead(FILE *fp)
 {
   int magic, maxval;
-  int i, index;
+  int i, ii, index;
   int nCols, nRows;
+  char tmp[NUM_COLS];
+  
+  index = 0;
 
   /* Read header */
   pgmReadHeader(fp, &magic, &nCols, &nRows, &maxval);
+  printf("Header Data is %d, %d, %d\n", magic, nCols, nRows);
 
   /* Read binary image data */
   for (i = 0 ; i < NUM_ROWS ; i++)  
   {
-    fread(&imageBuffer[index], NUM_COLS, 1, fp);
-    index += NUM_COLS;
+    fread(tmp, NUM_COLS, 1, fp);
+
+    // Copy tmp into Image buffer
+    for (ii = 0; ii < NUM_COLS; ii++)
+    {
+        imageBuffer[index] = tmp[ii];
+        index++;  	
+    }
   }
 
 }
@@ -240,8 +274,11 @@ void pgmReadFile(char *fname)
 
   /* Open file */
   if ( (fp = fopen(fname, "rb")) == NULL)
+  {
+    printf("(pgmReadFile) Can't open file named '%s' for reading\n", fname);
     KLTError("(pgmReadFile) Can't open file named '%s' for reading\n", fname);
-
+  }
+  
   /* Read file */
   pgmRead(fp);
 
@@ -289,8 +326,12 @@ void pgmWriteFile(
 
   /* Open file */
   if ( (fp = fopen(fname, "wb")) == NULL)
+  {
+    printf("(pgmWriteFile) Can't open file named '%s' for writing\n", fname);
     KLTError("(pgmWriteFile) Can't open file named '%s' for writing\n", fname);
-
+    
+  }
+  
   /* Write to file */
   pgmWrite(fp, img, ncols, nrows);
 
@@ -346,8 +387,11 @@ void ppmWriteFileRGB(
 
   /* Open file */
   if ( (fp = fopen(fname, "wb")) == NULL)
+  {
+    printf("(ppmWriteFileRGB) Can't open file named '%s' for writing\n", fname);
     KLTError("(ppmWriteFileRGB) Can't open file named '%s' for writing\n", fname);
-
+  }
+  
   /* Write to file */
   ppmWrite(fp, redimg, greenimg, blueimg, ncols, nrows);
 
@@ -368,7 +412,7 @@ void ppmWriteFileRGB(
   	for (i = 0; i < NUM_FRAMES; i++)
   	{
   		// Load the frame data
-  		sprintf(fnamein, "huntington_1280/huntington_1080p_60fps_%d.pgm", i+1);
+  		sprintf(fnamein, "../huntington_1280/huntington_1080p_60fps_%d.pgm", i+1);
     	pgmReadFile(fnamein);
   		
   		// Send the to queue
