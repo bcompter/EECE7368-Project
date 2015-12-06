@@ -1,15 +1,11 @@
-Digital Camera Example 
+EECE 7368 Project 
 ----------------------
 
 
  Overview
  --------
+todo
 
-This example models a portion of a digital camera. It covers the JPEG 
-encoding of a BMP image into a JPEG image. For simplicity the input is 
-read from a fixed named file "ccd.bmp" and the output is delivered into
-"test.jpg". An additional assumption is that the input image is of fixed 
-size: 116x96.
 
  Directory structure
  -------------------
@@ -22,8 +18,6 @@ size: 116x96.
  -----------
 
  make          compile and test SpecC specification 
- make  all     compile and test reference and SpecC specification
- make  ref     compile and test reference solution
 
 
 
