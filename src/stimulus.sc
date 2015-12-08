@@ -412,14 +412,16 @@ void ppmWriteFileRGB(
   	for (i = 0; i < NUM_FRAMES; i++)
   	{
   		// Load the frame data
+  		printf("Loading frame %d\n", i);
   		sprintf(fnamein, "../huntington_1280/huntington_1080p_60fps_%d.pgm", i+1);
     	pgmReadFile(fnamein);
   		
   		// Send the to queue
+  		printf("Sending data to Design\n");
   		for (ii = 0; ii < NUM_ROWS*NUM_COLS; ii++)
   		{
   			bytesToDesign.send(&imageBuffer[ii], sizeof(char));
-  			
+			//printf("Sending %d\n", ii);
   		}  // end of loading the queue
   		
   	}  // end for each frame
