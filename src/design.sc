@@ -107,6 +107,7 @@ void KLTWarning(char *fmt, ...)
   printf("WARNING...\n");
 }
 
+
 /*********************************************************************/
 
 void _fillFeaturemap(
@@ -1160,7 +1161,7 @@ KLT_TrackingContext KLTCreateTrackingContext()
 
 	// Behaviors From Imports
   	Read read(bytesFromStimulus, img1);
-  	Track track(tc);
+  	Track track(tc, img1, img2, fl);
 
     // Launch main behavior code
   	void main(void) 
@@ -1174,9 +1175,7 @@ KLT_TrackingContext KLTCreateTrackingContext()
   		
   		// Loop variables
   		int i, ii;
-  		
-  		
-  		
+
   		printf("Starting design\n");
   		
   		// More initialization
