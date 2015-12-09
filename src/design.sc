@@ -10,12 +10,15 @@
 
 #include "main.sh"
 
-import "i_receiver";
-
 #include "klt_util.h"
 #include "klt.h"
 #include "convolve.h"
 #include "pyramid.h"
+
+import "i_receiver";
+import "read.sc";
+import "track.sc";
+
 
 #define SWAP3(list, i, j)               \
 {register int *pi, *pj, tmp;            \
@@ -1150,34 +1153,41 @@ KLT_TrackingContext KLTCreateTrackingContext()
   return(tc);
 }
 
-unsigned char img1 [NUM_COLS*NUM_ROWS];
-unsigned char img2 [NUM_COLS*NUM_ROWS];
+	KLT_TrackingContext tc;
+  	KLT_FeatureList fl;
+	unsigned char img1 [NUM_COLS*NUM_ROWS];
+	unsigned char img2 [NUM_COLS*NUM_ROWS];
+
+	// Behaviors From Imports
+  	Read read(bytesFromStimulus, img1);
+  	Track track(tc);
 
     // Launch main behavior code
   	void main(void) 
   	{
   		// Initialize data
-  		/*
+  		
   		KLT_TrackingContext tc;
   		KLT_FeatureList fl;
   		KLT_FeatureTable ft;
   		int nFeatures, nFrames;
-  		*/
+  		
   		// Loop variables
   		int i, ii;
+  		
+  		
   		
   		printf("Starting design\n");
   		
   		// More initialization
-  		/*
   		printf("Creating context\n");
   		tc = KLTCreateTrackingContext();
   		nFeatures = 1024;
-  		nFrames = 510;*/
+  		nFrames = 510;
   		
   		/* DEBUG, print out the Tracking Contents */
   		//KLTPrintTrackingContext(tc);
-  		/*
+  		
   		printf("Creating feature list\n");
   		fl = KLTCreateFeatureList(nFeatures);
   		
@@ -1185,10 +1195,10 @@ unsigned char img2 [NUM_COLS*NUM_ROWS];
   		ft = KLTCreateFeatureTable(nFrames, nFeatures);
   		tc.sequentialMode = TRUE;
   		tc.writeInternalImages = FALSE;
-  		sigma_last = -10.0;*/
+  		sigma_last = -10.0;
   		
   		/* set this to 2 to turn on affine consistency check */
-  		//tc.affineConsistencyCheck = -1;  
+  		tc.affineConsistencyCheck = -1;  
   		
   		// Receive and store the first image data
   		printf("Receiving image data\n");
@@ -1198,19 +1208,16 @@ unsigned char img2 [NUM_COLS*NUM_ROWS];
   		}
   		
   		// Select Good Features
-  		//printf("KLTSelectGoodFeatures\n");
-  		//KLTSelectGoodFeatures(&tc, img1, NUM_COLS, NUM_ROWS, fl);
+  		printf("KLTSelectGoodFeatures\n");
+  		KLTSelectGoodFeatures(&tc, img1, NUM_COLS, NUM_ROWS, fl);
   	    
     	while(1)
     	{      		
       		// Receive Image data
-      		for (i = 0; i < NUM_ROWS*NUM_COLS; i++)
-  			{
-  				bytesFromStimulus.receive(&img2[i], sizeof(char));
-  			}
+      		read;
       		
       		// Track features
-      		// ...
+      		track;
       		
       		// Store features?  or send to monitor???
       		// ...

@@ -421,7 +421,6 @@ void ppmWriteFileRGB(
   		for (ii = 0; ii < NUM_ROWS*NUM_COLS; ii++)
   		{
   			bytesToDesign.send(&imageBuffer[ii], sizeof(char));
-			//printf("Sending %d\n", ii);
   		}  // end of loading the queue
   		
   	}  // end for each frame
