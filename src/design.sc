@@ -43,7 +43,7 @@ behavior Design(i_receiver bytesFromStimulus)
 	typedef enum {SELECTING_ALL, REPLACING_SOME} selectionMode;
 
  const int mindist = 10;
- const int window_size = 3;
+ const int window_size = 4;
  const int min_eigenvalue = 1;
  const float min_determinant = 0.01f;
  const float min_displacement = 0.1f;
@@ -1182,7 +1182,7 @@ KLT_TrackingContext KLTCreateTrackingContext()
   		printf("Creating context\n");
   		tc = KLTCreateTrackingContext();
   		nFeatures = 1024;
-  		nFrames = 510;
+  		nFrames = NUM_FRAMES;
   		
   		/* DEBUG, print out the Tracking Contents */
   		//KLTPrintTrackingContext(tc);
