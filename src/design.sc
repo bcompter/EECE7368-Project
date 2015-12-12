@@ -64,7 +64,7 @@ behavior Design(i_receiver bytesFromStimulus)
  const float affine_min_displacement = 0.02f;
  const float affine_max_displacement_differ = 1.5f;
 
- const KLT_BOOL smoothBeforeSelecting = TRUE;
+ const KLT_BOOL smoothBeforeSelecting = FALSE;
  const KLT_BOOL writeInternalImages = FALSE;
  const int search_range = 15;
  const int nSkippedPixels = 0;
@@ -106,6 +106,33 @@ void KLTWarning(char *fmt, ...)
 {
   printf("WARNING...\n");
 }
+
+/*********************************************************************
+ *
+ */
+
+void KLTStoreFeatureList(
+  KLT_FeatureList fl,
+  KLT_FeatureTable ft,
+  int frame)
+{
+  int feat;
+
+  if (frame < 0 || frame >= ft->nFrames)
+    KLTError("(KLTStoreFeatures) Frame number %d is not between 0 and %d",
+             frame, ft->nFrames - 1);
+
+  if (fl->nFeatures != ft->nFeatures)
+    KLTError("(KLTStoreFeatures) FeatureList and FeatureTable must "
+             "have the same number of features");
+
+  for (feat = 0 ; feat < fl->nFeatures ; feat++)  {
+    ft->feature[feat][frame]->x   = fl->feature[feat]->x;
+    ft->feature[feat][frame]->y   = fl->feature[feat]->y;
+    ft->feature[feat][frame]->val = fl->feature[feat]->val;
+  }
+}
+
 
 
 /*********************************************************************/
@@ -555,6 +582,9 @@ void _convolveSeparate(
   
   /* Do convolution */
   _convolveImageHoriz(imgin, horiz_kernel, tmpimg);
+  
+  printf("FloatData: %f, %f\n", imgin->data[2163], tmpimg->data[2163]);
+  
   _convolveImageVert(tmpimg, vert_kernel, imgout);
 
   /* Free memory */
@@ -572,6 +602,8 @@ void _KLTComputeGradients(
   _KLT_FloatImage gradx,
   _KLT_FloatImage grady)
 {
+int i;
+printf("_KLTComputeGradients: %f\n", sigma);
 				
   /* Output images must be large enough to hold result */
   assert(gradx->ncols >= img->ncols);
@@ -581,7 +613,16 @@ void _KLTComputeGradients(
 
   /* Compute kernels, if necessary */
   if (fabs(sigma - sigma_last) > 0.05)
+  {
     _computeKernels(sigma, &gauss_kernel, &gaussderiv_kernel);
+    printf("Compute Kernels \n");
+  }
+  
+  for (i = 0; i < gauss_kernel.width; i++)
+  {
+  	printf("%f,", gauss_kernel.data[i]);
+  }
+  printf("\n");
 	
   _convolveSeparate(img, gaussderiv_kernel, gauss_kernel, gradx);
   _convolveSeparate(img, gauss_kernel, gaussderiv_kernel, grady);
@@ -598,6 +639,7 @@ void _KLTComputeSmoothedImage(
   float sigma,
   _KLT_FloatImage smooth)
 {
+printf("***** Sigma: %f\n", sigma);
   /* Output image must be large enough to hold result */
   assert(smooth->ncols >= img->ncols);
   assert(smooth->nrows >= img->nrows);
@@ -621,6 +663,7 @@ void _KLTToFloatImage(
   int ncols, int nrows,
   _KLT_FloatImage floatimg)
 {
+int i;
   KLT_PixelType *ptrend;
   float *ptrout;
 
@@ -634,7 +677,14 @@ void _KLTToFloatImage(
   floatimg->ncols = ncols;
   floatimg->nrows = nrows;
 
-  while (img < ptrend)  *ptrout++ = (float) *img++;
+  i = 0;
+  while (img < ptrend)  
+  {
+  	//printf("KLT TO FLOAT %d: %f, ", i, (float) *img);
+  	*ptrout++ = (float) *img++;
+  	//printf("%f\n", (float) *(ptrout-1));
+  	i++;
+  }
 }
 
 
@@ -650,7 +700,7 @@ void _KLTSelectGoodFeatures(
   selectionMode mode)
 {
   _KLT_FloatImage floatimg, gradx, grady;
-  int window_hw, window_hh;
+  int window_hw, window_hh, i;
   int *pointlist;
   int npoints;
   KLT_BOOL overwriteAllFeatures;
@@ -689,14 +739,17 @@ void _KLTSelectGoodFeatures(
   pointlist = (int *) malloc(ncols * nrows * 3 * sizeof(int));
 
   /* Create temporary images, etc. */
-  if (mode == REPLACING_SOME && 
-      tc->sequentialMode && tc->pyramid_last != NULL)  {
+  if (mode == REPLACING_SOME && tc->sequentialMode && tc->pyramid_last != NULL)  
+  {
+  	printf("!!!!\n");
     floatimg = ((_KLT_Pyramid) tc->pyramid_last)->img[0];
     gradx = ((_KLT_Pyramid) tc->pyramid_last_gradx)->img[0];
     grady = ((_KLT_Pyramid) tc->pyramid_last_grady)->img[0];
     assert(gradx != NULL);
     assert(grady != NULL);
-  } else  {
+  } 
+  else  
+  {
     floatimages_created = TRUE;
     floatimg = _KLTCreateFloatImage(ncols, nrows);
     gradx    = _KLTCreateFloatImage(ncols, nrows);
@@ -705,16 +758,28 @@ void _KLTSelectGoodFeatures(
       _KLT_FloatImage tmpimg;
       tmpimg = _KLTCreateFloatImage(ncols, nrows);
       _KLTToFloatImage(img, ncols, nrows, tmpimg);
+      
+      printf("FLoatImageCheck: %f\n", tmpimg->data[2163]);
       _KLTComputeSmoothedImage(tmpimg, _KLTComputeSmoothSigma(tc), floatimg);
+      printf("FLoatImageCheck: %f\n", floatimg->data[2163]);
       _KLTFreeFloatImage(tmpimg);
     } else _KLTToFloatImage(img, ncols, nrows, floatimg);
  
     /* Compute gradient of image in x and y direction */
+    
+    printf("FLoatImageCheck: %f\n", floatimg->data[2163]);
+    
     _KLTComputeGradients(floatimg, tc->grad_sigma, gradx, grady);
   }
+  
+  	for (i = 0; i < ncols*nrows; i++)
+	{
+		//printf("Grad %d: %f\n", i, *(gradx->data + i));
+	}
 	
   /* Write internal images */
-  if (tc->writeInternalImages)  {
+  if (tc->writeInternalImages)  
+  {
     //_KLTWriteFloatImageToPGM(floatimg, "kltimg_sgfrlf.pgm");
     //_KLTWriteFloatImageToPGM(gradx, "kltimg_sgfrlf_gx.pgm");
     //_KLTWriteFloatImageToPGM(grady, "kltimg_sgfrlf_gy.pgm");
@@ -740,6 +805,7 @@ void _KLTSelectGoodFeatures(
     
     if (borderx < window_hw)  borderx = window_hw;
     if (bordery < window_hh)  bordery = window_hh;
+    printf("Borders: %d, %d\n", borderx, bordery);
 
     /* Find largest value of an int */
     for (i = 0 ; i < sizeof(int) ; i++)  limit *= 256;
@@ -1104,74 +1170,111 @@ void KLTChangeTCPyramid(KLT_TrackingContext * tc)
 			  "the size statically allocated for pyramid!\n");
 }
 
+/*********************************************************************
+ * KLTPrintTrackingContext
+ */
+
+void KLTPrintTrackingContext(
+  KLT_TrackingContext *tc)
+{
+  printf("\n\nTracking context:\n\n");
+  printf("\tmindist = %d\n", tc->mindist);
+  printf("\twindow_width = %d\n", tc->window_width);
+  printf("\twindow_height = %d\n", tc->window_height);
+  printf("\tsequentialMode = %s\n",
+          tc->sequentialMode ? "TRUE" : "FALSE");
+  printf("\tsmoothBeforeSelecting = %s\n",
+          tc->smoothBeforeSelecting ? "TRUE" : "FALSE");
+  printf("\twriteInternalImages = %s\n",
+          tc->writeInternalImages ? "TRUE" : "FALSE");
+
+  printf("\tmin_eigenvalue = %d\n", tc->min_eigenvalue);
+  printf("\tmin_determinant = %f\n", tc->min_determinant);
+  printf("\tmin_displacement = %f\n", tc->min_displacement);
+  printf("\tmax_iterations = %d\n", tc->max_iterations);
+  printf("\tmax_residue = %f\n", tc->max_residue);
+  printf("\tgrad_sigma = %f\n", tc->grad_sigma);
+  printf("\tsmooth_sigma_fact = %f\n", tc->smooth_sigma_fact);
+  printf("\tpyramid_sigma_fact = %f\n", tc->pyramid_sigma_fact);
+  printf("\tnSkippedPixels = %d\n", tc->nSkippedPixels);
+  printf("\tborderx = %d\n", tc->borderx);
+  printf("\tbordery = %d\n", tc->bordery);
+  printf("\tnPyramidLevels = %d\n", tc->nPyramidLevels);
+  printf("\tsubsampling = %d\n", tc->subsampling);
+  
+  printf("\n\tpyramid_last = %s\n", (tc->pyramid_last!=NULL) ?
+          "points to old image" : "NULL");
+  printf("\tpyramid_last_gradx = %s\n", 
+          (tc->pyramid_last_gradx!=NULL) ?
+          "points to old image" : "NULL");
+  printf("\tpyramid_last_grady = %s\n",
+          (tc->pyramid_last_grady!=NULL) ?
+          "points to old image" : "NULL");
+  printf("\n\n");
+}
 
 /*********************************************************************
  * KLTCreateTrackingContext
  *
  */
-KLT_TrackingContext KLTCreateTrackingContext()
+KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
 {
-  KLT_TrackingContext tc;
-
   /* Set values to default values */
-  tc.mindist = mindist;
-  tc.window_width = window_size;
-  tc.window_height = window_size;
-  tc.sequentialMode = sequentialMode;
-  tc.smoothBeforeSelecting = smoothBeforeSelecting;
-  tc.writeInternalImages = writeInternalImages;
-  tc.lighting_insensitive = lighting_insensitive;
-  tc.min_eigenvalue = min_eigenvalue;
-  tc.min_determinant = min_determinant;
-  tc.max_iterations = max_iterations;
-  tc.min_displacement = min_displacement;
-  tc.max_residue = max_residue;
-  tc.grad_sigma = grad_sigma;
-  tc.smooth_sigma_fact = smooth_sigma_fact;
-  tc.pyramid_sigma_fact = pyramid_sigma_fact;
-  tc.step_factor = step_factor;
-  tc.nSkippedPixels = nSkippedPixels;
-  tc.pyramid_last = NULL;
-  tc.pyramid_last_gradx = NULL;
-  tc.pyramid_last_grady = NULL;
+  tc->mindist = mindist;
+  tc->window_width = window_size;
+  tc->window_height = window_size;
+  tc->sequentialMode = sequentialMode;
+  tc->smoothBeforeSelecting = smoothBeforeSelecting;
+  tc->writeInternalImages = writeInternalImages;
+  tc->lighting_insensitive = lighting_insensitive;
+  tc->min_eigenvalue = min_eigenvalue;
+  tc->min_determinant = min_determinant;
+  tc->max_iterations = max_iterations;
+  tc->min_displacement = min_displacement;
+  tc->max_residue = max_residue;
+  tc->grad_sigma = grad_sigma;
+  tc->smooth_sigma_fact = smooth_sigma_fact;
+  tc->pyramid_sigma_fact = pyramid_sigma_fact;
+  tc->step_factor = step_factor;
+  tc->nSkippedPixels = nSkippedPixels;
+  tc->pyramid_last = NULL;
+  tc->pyramid_last_gradx = NULL;
+  tc->pyramid_last_grady = NULL;
   
   /* for affine mapping */
-  tc.affineConsistencyCheck = affineConsistencyCheck;
-  tc.affine_window_width = affine_window_size;
-  tc.affine_window_height = affine_window_size;
-  tc.affine_max_iterations = affine_max_iterations;
-  tc.affine_max_residue = affine_max_residue;
-  tc.affine_min_displacement = affine_min_displacement;
-  tc.affine_max_displacement_differ = affine_max_displacement_differ;
+  tc->affineConsistencyCheck = affineConsistencyCheck;
+  tc->affine_window_width = affine_window_size;
+  tc->affine_window_height = affine_window_size;
+  tc->affine_max_iterations = affine_max_iterations;
+  tc->affine_max_residue = affine_max_residue;
+  tc->affine_min_displacement = affine_min_displacement;
+  tc->affine_max_displacement_differ = affine_max_displacement_differ;
 
   /* Change nPyramidLevels and subsampling */
-  KLTChangeTCPyramid(&tc);
+  KLTChangeTCPyramid(tc);
 	
   /* Update border, which is dependent upon  */
   /* smooth_sigma_fact, pyramid_sigma_fact, window_size, and subsampling */
-  KLTUpdateTCBorder(&tc);
+  KLTUpdateTCBorder(tc);
 
-  return(tc);
 }
 
 	KLT_TrackingContext tc;
   	KLT_FeatureList fl;
+  	KLT_FeatureTable ft;
 	unsigned char img1 [NUM_COLS*NUM_ROWS];
 	unsigned char img2 [NUM_COLS*NUM_ROWS];
+	int frameNumber;
 
 	// Behaviors From Imports
   	Read read(bytesFromStimulus, img1);
-  	Track track(tc, img1, img2, fl);
+  	Track track(tc, img1, img2, fl, ft, frameNumber);
 
     // Launch main behavior code
   	void main(void) 
   	{
   		// Initialize data
-  		
-  		KLT_TrackingContext tc;
-  		KLT_FeatureList fl;
-  		KLT_FeatureTable ft;
-  		int nFeatures, nFrames;
+  		int nFeatures;
   		
   		// Loop variables
   		int i, ii;
@@ -1180,18 +1283,18 @@ KLT_TrackingContext KLTCreateTrackingContext()
   		
   		// More initialization
   		printf("Creating context\n");
-  		tc = KLTCreateTrackingContext();
+  		KLTCreateTrackingContext(&tc);
   		nFeatures = 1024;
-  		nFrames = NUM_FRAMES;
+  		frameNumber = 0;
   		
   		/* DEBUG, print out the Tracking Contents */
-  		//KLTPrintTrackingContext(tc);
+  		KLTPrintTrackingContext(&tc);
   		
   		printf("Creating feature list\n");
   		fl = KLTCreateFeatureList(nFeatures);
   		
   		printf("Creating feature Table");
-  		ft = KLTCreateFeatureTable(nFrames, nFeatures);
+  		ft = KLTCreateFeatureTable(NUM_FRAMES, nFeatures);
   		tc.sequentialMode = TRUE;
   		tc.writeInternalImages = FALSE;
   		sigma_last = -10.0;
@@ -1201,14 +1304,22 @@ KLT_TrackingContext KLTCreateTrackingContext()
   		
   		// Receive and store the first image data
   		printf("Receiving image data\n");
-  		for (i = 0; i < NUM_ROWS*NUM_COLS; i++)
+  		for (i = 0; i < NUM_ROWS * NUM_COLS; i++)
   		{
   			bytesFromStimulus.receive(&img1[i], sizeof(char));
+  			//printf("Data %d: %d\n", i, img1[i]);
   		}
   		
   		// Select Good Features
   		printf("KLTSelectGoodFeatures\n");
   		KLTSelectGoodFeatures(&tc, img1, NUM_COLS, NUM_ROWS, fl);
+  		
+  		// Debugging...
+  		for (i = 0 ; i < 5 ; i++)  
+  		{
+          printf("Feature #%d:  (%f,%f) with value of %d\n",
+               i, fl->feature[i]->x, fl->feature[i]->y, fl->feature[i]->val);
+     	}
   	    
     	while(1)
     	{      		
@@ -1218,8 +1329,13 @@ KLT_TrackingContext KLTCreateTrackingContext()
       		// Track features
       		track;
       		
-      		// Store features?  or send to monitor???
-      		// ...
+      		// Store Features
+     		KLTStoreFeatureList(fl, ft, frameNumber);
+      		
+      		// Send to the monitor for storage
+      		
+      		// Increment frame count
+      		frameNumber++;
       		
     	}
     

@@ -19,7 +19,9 @@ typedef float *_FloatWindow;
 behavior Track (KLT_TrackingContext g_tc, 
 				unsigned char g_img1 [NUM_COLS*NUM_ROWS],
 				unsigned char g_img2 [NUM_COLS*NUM_ROWS],
-				KLT_FeatureList g_fl) 
+				KLT_FeatureList g_fl,
+				KLT_FeatureTable g_ft,
+				int g_frameNumber) 
 {  
 	
 	
@@ -2127,14 +2129,13 @@ void KLTTrackFeatures(
 	_KLTFreePyramid(pyramid1_grady);
 
 }
-	
 
   void main(void) 
   {
   	sigma_last = 0.0;
   
      // Track features
-     // ...
+     KLTTrackFeatures(&g_tc, g_img1, g_img2, NUM_COLS, NUM_ROWS, g_fl);
 
   }  // end void main void
   
