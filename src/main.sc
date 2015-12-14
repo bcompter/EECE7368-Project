@@ -23,18 +23,21 @@ behavior Main
 	// Global storage for frame data
 	char imageBuffer[NUM_ROWS*NUM_COLS*sizeof(unsigned char)];
 
-	// Queue between stimulus and design
-	const unsigned long qSize = 1024;
+	// Queues between stimulus and design
+	const unsigned long qSize = 2048;
   	c_queue bytesToDesign(qSize);
-	c_queue bytesToMonitor(qSize);
+	
+	// Queues between the design and the monitor
+	c_queue imageBytesToMonitor(qSize);
+	c_queue featureBytesToMonitor(qSize);
 
 	// Trigger Read to start
   	c_handshake start;
 
     // Behaviors
   	Stimulus stimulus(imageBuffer, bytesToDesign);
-	Design design(bytesToDesign);
-  	Monitor monitor(bytesToMonitor);
+	Design design(bytesToDesign, imageBytesToMonitor, featureBytesToMonitor);
+  	Monitor monitor(imageBytesToMonitor, featureBytesToMonitor);
 
   // Main application entry point
   int main(void) 

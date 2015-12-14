@@ -286,119 +286,6 @@ void pgmReadFile(char *fname)
   fclose(fp);
 }
 
-
-/*********************************************************************
- * pgmWrite
- */
-
-void pgmWrite(
-  FILE *fp,
-  unsigned char *img, 
-  int ncols, 
-  int nrows)
-{
-  int i;
-
-  /* Write header */
-  fprintf(fp, "P5\n");
-  fprintf(fp, "%d %d\n", ncols, nrows);
-  fprintf(fp, "255\n");
-
-  /* Write binary data */
-  for (i = 0 ; i < nrows ; i++)  {
-    fwrite(img, ncols, 1, fp);
-    img += ncols;
-  }
-}
-
-
-/*********************************************************************
- * pgmWriteFile
- */
-
-void pgmWriteFile(
-  char *fname, 
-  unsigned char *img, 
-  int ncols, 
-  int nrows)
-{
-  FILE *fp;
-
-  /* Open file */
-  if ( (fp = fopen(fname, "wb")) == NULL)
-  {
-    printf("(pgmWriteFile) Can't open file named '%s' for writing\n", fname);
-    KLTError("(pgmWriteFile) Can't open file named '%s' for writing\n", fname);
-    
-  }
-  
-  /* Write to file */
-  pgmWrite(fp, img, ncols, nrows);
-
-  /* Close file */
-  fclose(fp);
-}
-
-
-/*********************************************************************
- * ppmWrite
- */
-
-void ppmWrite(
-  FILE *fp,
-  unsigned char *redimg,
-  unsigned char *greenimg,
-  unsigned char *blueimg,
-  int ncols, 
-  int nrows)
-{
-  int i, j;
-
-  /* Write header */
-  fprintf(fp, "P6\n");
-  fprintf(fp, "%d %d\n", ncols, nrows);
-  fprintf(fp, "255\n");
-
-  /* Write binary data */
-  for (j = 0 ; j < nrows ; j++)  {
-    for (i = 0 ; i < ncols ; i++)  {
-      fwrite(redimg, 1, 1, fp); 
-      fwrite(greenimg, 1, 1, fp);
-      fwrite(blueimg, 1, 1, fp);
-      redimg++;  greenimg++;  blueimg++;
-    }
-  }
-}
-
-
-/*********************************************************************
- * ppmWriteFileRGB
- */
-
-void ppmWriteFileRGB(
-  char *fname, 
-  unsigned char *redimg,
-  unsigned char *greenimg,
-  unsigned char *blueimg,
-  int ncols, 
-  int nrows)
-{
-  FILE *fp;
-
-  /* Open file */
-  if ( (fp = fopen(fname, "wb")) == NULL)
-  {
-    printf("(ppmWriteFileRGB) Can't open file named '%s' for writing\n", fname);
-    KLTError("(ppmWriteFileRGB) Can't open file named '%s' for writing\n", fname);
-  }
-  
-  /* Write to file */
-  ppmWrite(fp, redimg, greenimg, blueimg, ncols, nrows);
-
-  /* Close file */
-  fclose(fp);
-}
-
   /** 
    * Read input files and pass frame data to the design behavior using a queue
    */
@@ -412,15 +299,16 @@ void ppmWriteFileRGB(
   	for (i = 0; i < NUM_FRAMES; i++)
   	{
   		// Load the frame data
-  		printf("Loading frame %d\n", i);
+  		printf("STIMULUS::Loading frame %d\n", i);
   		sprintf(fnamein, "../huntington_1280/huntington_1080p_60fps_%d.pgm", i+1);
     	pgmReadFile(fnamein);
   		
   		// Send the to queue
-  		printf("Sending data to Design\n");
+  		printf("STIMULUS::Sending data to Design\n");
   		for (ii = 0; ii < NUM_ROWS*NUM_COLS; ii++)
   		{
   			bytesToDesign.send(&imageBuffer[ii], sizeof(char));
+  			//printf("STIMULUS::Send byte %d\n", ii);
   		}  // end of loading the queue
   		
   	}  // end for each frame

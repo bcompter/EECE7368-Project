@@ -15,6 +15,7 @@
 #include "convolve.h"
 #include "pyramid.h"
 
+import "i_sender";
 import "i_receiver";
 import "read.sc";
 import "track.sc";
@@ -37,7 +38,7 @@ import "track.sc";
      *pj=tmp;    \
 }
 
-behavior Design(i_receiver bytesFromStimulus) 
+behavior Design(i_receiver bytesFromStimulus, i_sender imageBytesToMonitor, i_sender featureBytesToMonitor) 
 {    
 
 	typedef enum {SELECTING_ALL, REPLACING_SOME} selectionMode;
@@ -126,7 +127,8 @@ void KLTStoreFeatureList(
     KLTError("(KLTStoreFeatures) FeatureList and FeatureTable must "
              "have the same number of features");
 
-  for (feat = 0 ; feat < fl->nFeatures ; feat++)  {
+  for (feat = 0 ; feat < fl->nFeatures ; feat++)  
+  {
     ft->feature[feat][frame]->x   = fl->feature[feat]->x;
     ft->feature[feat][frame]->y   = fl->feature[feat]->y;
     ft->feature[feat][frame]->val = fl->feature[feat]->val;
@@ -979,9 +981,12 @@ KLT_FeatureList KLTCreateFeatureList(int nFeatures)
   KLT_FeatureList fl;
   KLT_Feature first;
   int nbytes, i;
+  
   nbytes = sizeof(KLT_FeatureListRec) +
     nFeatures * sizeof(KLT_Feature) +
     nFeatures * sizeof(KLT_FeatureRec);
+    
+    printf("KLTCreateFeatureList:: nbytes = %d\n", nbytes);
 	
   /* Allocate memory for feature list */
   fl = (KLT_FeatureList)  malloc(nbytes);
@@ -1265,9 +1270,10 @@ KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
 	unsigned char img1 [NUM_COLS*NUM_ROWS];
 	unsigned char img2 [NUM_COLS*NUM_ROWS];
 	int frameNumber;
+	Feature tempFeature;
 
 	// Behaviors From Imports
-  	Read read(bytesFromStimulus, img1);
+  	Read read(bytesFromStimulus, img2);
   	Track track(tc, img1, img2, fl, ft, frameNumber);
 
     // Launch main behavior code
@@ -1284,17 +1290,17 @@ KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
   		// More initialization
   		printf("Creating context\n");
   		KLTCreateTrackingContext(&tc);
-  		nFeatures = 1024;
-  		frameNumber = 0;
+  		nFeatures = NUM_FEATURES;
+  		frameNumber = 1;
   		
   		/* DEBUG, print out the Tracking Contents */
   		KLTPrintTrackingContext(&tc);
   		
-  		printf("Creating feature list\n");
-  		fl = KLTCreateFeatureList(nFeatures);
+  		printf("DESIGN::Creating feature list\n");
+  		fl = KLTCreateFeatureList(NUM_FEATURES);
   		
-  		printf("Creating feature Table");
-  		ft = KLTCreateFeatureTable(NUM_FRAMES, nFeatures);
+  		printf("DESIGN::Creating feature Table\n");
+  		ft = KLTCreateFeatureTable(NUM_FRAMES, NUM_FEATURES);
   		tc.sequentialMode = TRUE;
   		tc.writeInternalImages = FALSE;
   		sigma_last = -10.0;
@@ -1303,7 +1309,7 @@ KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
   		tc.affineConsistencyCheck = -1;  
   		
   		// Receive and store the first image data
-  		printf("Receiving image data\n");
+  		printf("DESIGN::Receiving first image data\n");
   		for (i = 0; i < NUM_ROWS * NUM_COLS; i++)
   		{
   			bytesFromStimulus.receive(&img1[i], sizeof(char));
@@ -1311,7 +1317,7 @@ KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
   		}
   		
   		// Select Good Features
-  		printf("KLTSelectGoodFeatures\n");
+  		printf("DESIGN::KLTSelectGoodFeatures\n");
   		KLTSelectGoodFeatures(&tc, img1, NUM_COLS, NUM_ROWS, fl);
   		
   		// Debugging...
@@ -1330,9 +1336,23 @@ KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
       		track;
       		
       		// Store Features
-     		KLTStoreFeatureList(fl, ft, frameNumber);
+     		//KLTStoreFeatureList(fl, ft, frameNumber);
       		
-      		// Send to the monitor for storage
+      		// Send to the monitor for display
+      		printf("DESIGN::Sending image to the monitor\n");
+      		for (i = 0; i < NUM_ROWS*NUM_COLS; i++)
+  			{
+  				imageBytesToMonitor.send(&img2[i], sizeof(char));
+  			}
+  			
+  			printf("DESIGN::Sending features to the monitor\n");
+  			for (i = 0; i < NUM_FEATURES; i++)
+  			{
+  				tempFeature.x = fl->feature[i]->x;
+  				tempFeature.y = fl->feature[i]->y;
+  				tempFeature.value = fl->feature[i]->val;
+  				featureBytesToMonitor.send(&tempFeature, sizeof(Feature));
+  			}  			
       		
       		// Increment frame count
       		frameNumber++;
