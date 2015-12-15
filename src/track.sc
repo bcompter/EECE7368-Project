@@ -20,7 +20,6 @@ behavior Track (KLT_TrackingContext g_tc,
 				unsigned char g_img1 [NUM_COLS*NUM_ROWS],
 				unsigned char g_img2 [NUM_COLS*NUM_ROWS],
 				KLT_FeatureList g_fl,
-				KLT_FeatureTable g_ft,
 				int g_frameNumber) 
 {  
 	

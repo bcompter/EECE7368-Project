@@ -743,7 +743,6 @@ void _KLTSelectGoodFeatures(
   /* Create temporary images, etc. */
   if (mode == REPLACING_SOME && tc->sequentialMode && tc->pyramid_last != NULL)  
   {
-  	printf("!!!!\n");
     floatimg = ((_KLT_Pyramid) tc->pyramid_last)->img[0];
     gradx = ((_KLT_Pyramid) tc->pyramid_last_gradx)->img[0];
     grady = ((_KLT_Pyramid) tc->pyramid_last_grady)->img[0];
@@ -767,25 +766,10 @@ void _KLTSelectGoodFeatures(
       _KLTFreeFloatImage(tmpimg);
     } else _KLTToFloatImage(img, ncols, nrows, floatimg);
  
-    /* Compute gradient of image in x and y direction */
-    
-    printf("FLoatImageCheck: %f\n", floatimg->data[2163]);
-    
+    /* Compute gradient of image in x and y direction */    
     _KLTComputeGradients(floatimg, tc->grad_sigma, gradx, grady);
   }
-  
-  	for (i = 0; i < ncols*nrows; i++)
-	{
-		//printf("Grad %d: %f\n", i, *(gradx->data + i));
-	}
-	
-  /* Write internal images */
-  if (tc->writeInternalImages)  
-  {
-    //_KLTWriteFloatImageToPGM(floatimg, "kltimg_sgfrlf.pgm");
-    //_KLTWriteFloatImageToPGM(gradx, "kltimg_sgfrlf_gx.pgm");
-    //_KLTWriteFloatImageToPGM(grady, "kltimg_sgfrlf_gy.pgm");
-  }
+
 
   /* Compute trackability of each image pixel as the minimum
      of the two eigenvalues of the Z matrix */
@@ -899,76 +883,6 @@ void KLTSelectGoodFeatures(
   )
 {
   _KLTSelectGoodFeatures(tc, img, ncols, nrows, fl, SELECTING_ALL);
-}
-
-/*********************************************************************
- * _createArray2D
- *
- * Creates a two-dimensional array.
- *
- * INPUTS
- * ncols:      no. of columns
- * nrows:      no. of rows
- * nbytes:     no. of bytes per entry
- *
- * RETURNS
- * Pointer to an array.  Must be coerced.
- *
- * EXAMPLE
- * char **ar;
- * ar = (char **) createArray2D(8, 5, sizeof(char));
- */
-
-void** _createArray2D(int ncols, int nrows, int nbytes)
-{
-  char **tt;
-  int i;
-
-  tt = (char **) malloc(nrows * sizeof(void *) +
-                        ncols * nrows * nbytes);
-  if (tt == NULL)
-    KLTError("(createArray2D) Out of memory");
-
-  for (i = 0 ; i < nrows ; i++)
-    tt[i] = ((char *) tt) + (nrows * sizeof(void *) +
-                             i * ncols * nbytes);
-
-  return((void **) tt);
-}
-
-/*********************************************************************
- * KLTCreateFeatureTable
- *
- */
-
-KLT_FeatureTable KLTCreateFeatureTable(
-  int nFrames,
-  int nFeatures)
-{
-  KLT_FeatureTable ft;
-  KLT_Feature first;
-  int nbytes;
-  int i, j;
-  
-  nbytes = sizeof(KLT_FeatureTableRec);
-	
-  /* Allocate memory for feature history */
-  ft = (KLT_FeatureTable)  malloc(nbytes);
-	
-  /* Set parameters */
-  ft->nFrames = nFrames; 
-  ft->nFeatures = nFeatures; 
-	
-  /* Set pointers */
-  ft->feature = (KLT_Feature **) 
-    _createArray2D(nFrames, nFeatures, sizeof(KLT_Feature));
-  first = (KLT_Feature) malloc(nFrames * nFeatures * sizeof(KLT_FeatureRec));
-  for (j = 0 ; j < nFeatures ; j++)
-    for (i = 0 ; i < nFrames ; i++)
-      ft->feature[j][i] = first + j*nFrames + i;
-
-  /* Return feature table */
-  return(ft);
 }
 
 /*********************************************************************
@@ -1266,7 +1180,7 @@ KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
 
 	KLT_TrackingContext tc;
   	KLT_FeatureList fl;
-  	KLT_FeatureTable ft;
+
 	unsigned char img1 [NUM_COLS*NUM_ROWS];
 	unsigned char img2 [NUM_COLS*NUM_ROWS];
 	int frameNumber;
@@ -1274,7 +1188,7 @@ KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
 
 	// Behaviors From Imports
   	Read read(bytesFromStimulus, img2);
-  	Track track(tc, img1, img2, fl, ft, frameNumber);
+  	Track track(tc, img1, img2, fl, frameNumber);
 
     // Launch main behavior code
   	void main(void) 
@@ -1288,7 +1202,7 @@ KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
   		printf("Starting design\n");
   		
   		// More initialization
-  		printf("Creating context\n");
+  		printf("Creating tracking context\n");
   		KLTCreateTrackingContext(&tc);
   		nFeatures = NUM_FEATURES;
   		frameNumber = 1;
@@ -1299,8 +1213,6 @@ KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
   		printf("DESIGN::Creating feature list\n");
   		fl = KLTCreateFeatureList(NUM_FEATURES);
   		
-  		printf("DESIGN::Creating feature Table\n");
-  		ft = KLTCreateFeatureTable(NUM_FRAMES, NUM_FEATURES);
   		tc.sequentialMode = TRUE;
   		tc.writeInternalImages = FALSE;
   		sigma_last = -10.0;
@@ -1313,7 +1225,6 @@ KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
   		for (i = 0; i < NUM_ROWS * NUM_COLS; i++)
   		{
   			bytesFromStimulus.receive(&img1[i], sizeof(char));
-  			//printf("Data %d: %d\n", i, img1[i]);
   		}
   		
   		// Select Good Features
@@ -1335,9 +1246,6 @@ KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
       		// Track features
       		track;
       		
-      		// Store Features
-     		//KLTStoreFeatureList(fl, ft, frameNumber);
-      		
       		// Send to the monitor for display
       		printf("DESIGN::Sending image to the monitor\n");
       		for (i = 0; i < NUM_ROWS*NUM_COLS; i++)
@@ -1357,7 +1265,7 @@ KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
       		// Increment frame count
       		frameNumber++;
       		
-    	}
+    	}  // end while(1)
     
   	}  // end void main void
   

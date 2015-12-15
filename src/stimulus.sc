@@ -14,19 +14,9 @@ behavior Stimulus(char imageBuffer[NUM_ROWS*NUM_COLS*sizeof(unsigned char)],
 	i_sender bytesToDesign)
 {  
 
-/*********************************************************************
- * pnmio.c
- *
- * Various routines to manipulate PNM files.
- *********************************************************************/
-
-
 /* Standard includes */
 #include <stdio.h>   /* FILE  */
 #include <stdlib.h>  /* malloc(), atoi() */
-
-/* Our includes */
-//#include "error.h"
 
 #define LENGTH 80
 
@@ -148,7 +138,6 @@ void pgmReadHeader(
   {
     printf("(pgmReadHeader) Magic number is not 'P5', but 'P%d'", *magic);
     KLTError("(pgmReadHeader) Magic number is not 'P5', but 'P%d'", *magic);
-    
   }
 }
 
@@ -168,7 +157,6 @@ void ppmReadHeader(
   {
     printf("(ppmReadHeader) Magic number is not 'P6', but 'P%d'", *magic);
     KLTError("(ppmReadHeader) Magic number is not 'P6', but 'P%d'", *magic);
-    
   }
 }
 
@@ -291,7 +279,6 @@ void pgmReadFile(char *fname)
    */
   void main(void)
   {
-  
   	char fnamein[100], fnameout[100];
   	int i, ii;
   	
@@ -304,11 +291,10 @@ void pgmReadFile(char *fname)
     	pgmReadFile(fnamein);
   		
   		// Send the to queue
-  		printf("STIMULUS::Sending data to Design\n");
+  		printf("STIMULUS::Sending data to Design, %d\n", i);
   		for (ii = 0; ii < NUM_ROWS*NUM_COLS; ii++)
   		{
   			bytesToDesign.send(&imageBuffer[ii], sizeof(char));
-  			//printf("STIMULUS::Send byte %d\n", ii);
   		}  // end of loading the queue
   		
   	}  // end for each frame

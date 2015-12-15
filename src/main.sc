@@ -15,8 +15,6 @@ import "design";
 import "monitor";
 
 import "c_queue";
-import "c_handshake";
-import "c_double_handshake";
 
 behavior Main 
 {  
@@ -31,23 +29,20 @@ behavior Main
 	c_queue imageBytesToMonitor(qSize);
 	c_queue featureBytesToMonitor(qSize);
 
-	// Trigger Read to start
-  	c_handshake start;
-
     // Behaviors
   	Stimulus stimulus(imageBuffer, bytesToDesign);
 	Design design(bytesToDesign, imageBytesToMonitor, featureBytesToMonitor);
   	Monitor monitor(imageBytesToMonitor, featureBytesToMonitor);
 
-  // Main application entry point
-  int main(void) 
-  {
-    par
-    {
-      	stimulus;
-      	design;
-      	monitor;
-    }
+	// Main application entry point
+	int main(void) 
+	{
+		par
+		{
+			stimulus;
+			design;
+			monitor;
+		}
 
     return 0;
   }  // end int main void
