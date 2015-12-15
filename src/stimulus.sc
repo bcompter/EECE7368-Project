@@ -283,7 +283,7 @@ void pgmReadFile(char *fname)
   	int i, ii;
   	
   	// Loop over all frames
-  	for (i = 0; i < NUM_FRAMES; i++)
+  	for (i = 0; i < NUM_FRAMES + 1; i++)
   	{
   		// Load the frame data
   		printf("STIMULUS::Loading frame %d\n", i);
