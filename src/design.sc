@@ -125,6 +125,7 @@ void _fillFeaturemap(
         featuremap[iy*ncols+ix] = 1;
 }
 
+uchar featuremap[NUM_COLS*NUM_ROWS]; /* Boolean array recording proximity of features */
 
 /*********************************************************************
  * _enforceMinimumDistance
@@ -153,16 +154,18 @@ void _enforceMinimumDistance(
   KLT_BOOL overwriteAllFeatures)
 {
   int indx;          /* Index into features */
-  int x, y, val;     /* Location and trackability of pixel under consideration */
-  uchar *featuremap; /* Boolean array recording proximity of features */
+  int x, y, val, i;     /* Location and trackability of pixel under consideration */
+  
   int *ptr;
 	
   /* Cannot add features with an eigenvalue less than one */
   if (l_min_eigenvalue < 1)  l_min_eigenvalue = 1;
 
-  /* Allocate memory for feature map and clear it */
-  featuremap = (uchar *) malloc(ncols * nrows * sizeof(uchar));
-  memset(featuremap, 0, ncols*nrows);
+  /* Initialize variables */
+  for (i = 0; i < NUM_COLS*NUM_ROWS; i++)
+  {
+  	featuremap[i] = 0;
+  }
 	
   /* Necessary because code below works with (mindist-1) */
   l_mindist--;
@@ -173,13 +176,14 @@ void _enforceMinimumDistance(
       if (featurelist->feature[indx]->val >= 0)  {
         x   = (int) featurelist->feature[indx]->x;
         y   = (int) featurelist->feature[indx]->y;
-        _fillFeaturemap(x, y, featuremap, l_mindist, ncols, nrows);
+        _fillFeaturemap(x, y, &featuremap[0], l_mindist, ncols, nrows);
       }
 
   /* For each feature point, in descending order of importance, do ... */
   ptr = pointlist;
   indx = 0;
-  while (1)  {
+  while (1)  
+  {
 
     /* If we can't add all the points, then fill in the rest
        of the featurelist with -1's */
@@ -224,7 +228,8 @@ void _enforceMinimumDistance(
 
     /* If no neighbor has been selected, and if the minimum
        eigenvalue is large enough, then add feature to the current list */
-    if (!featuremap[y*ncols+x] && val >= l_min_eigenvalue)  {
+    if (!featuremap[y*ncols+x] && val >= l_min_eigenvalue)  
+    {
       featurelist->feature[indx]->x   = (KLT_locType) x;
       featurelist->feature[indx]->y   = (KLT_locType) y;
       featurelist->feature[indx]->val = (int) val;
@@ -241,12 +246,11 @@ void _enforceMinimumDistance(
 
       /* Fill in surrounding region of feature map, but
          make sure that pixels are in-bounds */
-      _fillFeaturemap(x, y, featuremap, l_mindist, ncols, nrows);
+      _fillFeaturemap(x, y, &featuremap[0], l_mindist, ncols, nrows);
     }
-  }
+    
+  }  // end while
 
-  /* Free feature map  */
-  free(featuremap);
 }
 
 void _quicksort(int *pointlist, int n)
