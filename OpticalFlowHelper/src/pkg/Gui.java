@@ -250,7 +250,14 @@ public class Gui extends javax.swing.JFrame {
         for (int i = start-1; i < stop; i++)
         {
             int delta = stop - start;
-            int colorValue = 255 - delta + i;
+            if (delta == 0)
+                delta = 1;
+            
+            int colorValue = (i - start) / delta * 128 + 128;
+            if (colorValue > 255)
+                colorValue = 255;
+            if (colorValue < 128)
+                colorValue = 128;
             FeatureList fl = frames.get(i);
             for (int ii = 0; ii < featureNumbers.size(); ii++)
             {
