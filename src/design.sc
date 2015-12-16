@@ -108,35 +108,6 @@ void KLTWarning(char *fmt, ...)
   printf("WARNING...\n");
 }
 
-/*********************************************************************
- *
- */
-
-void KLTStoreFeatureList(
-  KLT_FeatureList fl,
-  KLT_FeatureTable ft,
-  int frame)
-{
-  int feat;
-
-  if (frame < 0 || frame >= ft->nFrames)
-    KLTError("(KLTStoreFeatures) Frame number %d is not between 0 and %d",
-             frame, ft->nFrames - 1);
-
-  if (fl->nFeatures != ft->nFeatures)
-    KLTError("(KLTStoreFeatures) FeatureList and FeatureTable must "
-             "have the same number of features");
-
-  for (feat = 0 ; feat < fl->nFeatures ; feat++)  
-  {
-    ft->feature[feat][frame]->x   = fl->feature[feat]->x;
-    ft->feature[feat][frame]->y   = fl->feature[feat]->y;
-    ft->feature[feat][frame]->val = fl->feature[feat]->val;
-  }
-}
-
-
-
 /*********************************************************************/
 
 void _fillFeaturemap(
@@ -584,9 +555,6 @@ void _convolveSeparate(
   
   /* Do convolution */
   _convolveImageHoriz(imgin, horiz_kernel, tmpimg);
-  
-  printf("FloatData: %f, %f\n", imgin->data[2163], tmpimg->data[2163]);
-  
   _convolveImageVert(tmpimg, vert_kernel, imgout);
 
   /* Free memory */
@@ -605,7 +573,6 @@ void _KLTComputeGradients(
   _KLT_FloatImage grady)
 {
 int i;
-printf("_KLTComputeGradients: %f\n", sigma);
 				
   /* Output images must be large enough to hold result */
   assert(gradx->ncols >= img->ncols);
@@ -617,14 +584,7 @@ printf("_KLTComputeGradients: %f\n", sigma);
   if (fabs(sigma - sigma_last) > 0.05)
   {
     _computeKernels(sigma, &gauss_kernel, &gaussderiv_kernel);
-    printf("Compute Kernels \n");
   }
-  
-  for (i = 0; i < gauss_kernel.width; i++)
-  {
-  	printf("%f,", gauss_kernel.data[i]);
-  }
-  printf("\n");
 	
   _convolveSeparate(img, gaussderiv_kernel, gauss_kernel, gradx);
   _convolveSeparate(img, gauss_kernel, gaussderiv_kernel, grady);
@@ -641,7 +601,6 @@ void _KLTComputeSmoothedImage(
   float sigma,
   _KLT_FloatImage smooth)
 {
-printf("***** Sigma: %f\n", sigma);
   /* Output image must be large enough to hold result */
   assert(smooth->ncols >= img->ncols);
   assert(smooth->nrows >= img->nrows);
@@ -682,9 +641,7 @@ int i;
   i = 0;
   while (img < ptrend)  
   {
-  	//printf("KLT TO FLOAT %d: %f, ", i, (float) *img);
   	*ptrout++ = (float) *img++;
-  	//printf("%f\n", (float) *(ptrout-1));
   	i++;
   }
 }
@@ -760,9 +717,7 @@ void _KLTSelectGoodFeatures(
       tmpimg = _KLTCreateFloatImage(ncols, nrows);
       _KLTToFloatImage(img, ncols, nrows, tmpimg);
       
-      printf("FLoatImageCheck: %f\n", tmpimg->data[2163]);
       _KLTComputeSmoothedImage(tmpimg, _KLTComputeSmoothSigma(tc), floatimg);
-      printf("FLoatImageCheck: %f\n", floatimg->data[2163]);
       _KLTFreeFloatImage(tmpimg);
     } else _KLTToFloatImage(img, ncols, nrows, floatimg);
  
@@ -791,7 +746,6 @@ void _KLTSelectGoodFeatures(
     
     if (borderx < window_hw)  borderx = window_hw;
     if (bordery < window_hh)  bordery = window_hh;
-    printf("Borders: %d, %d\n", borderx, bordery);
 
     /* Find largest value of an int */
     for (i = 0 ; i < sizeof(int) ; i++)  limit *= 256;
