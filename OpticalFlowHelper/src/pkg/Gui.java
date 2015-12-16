@@ -224,9 +224,11 @@ public class Gui extends javax.swing.JFrame {
                     int frame = Integer.parseInt(split[0]);
                     int x = Integer.parseInt(split[1]);
                     int y = Integer.parseInt(split[2]);
+                    int value = Integer.parseInt(split[3]);
                     
                     f.x = x;
                     f.y = y;
+                    f.value = value;
                             
                     fl.features.add(frame, f);
                 }
@@ -248,12 +250,22 @@ public class Gui extends javax.swing.JFrame {
         for (int i = start-1; i < stop; i++)
         {
             int delta = stop - start;
-            int greenValue = 255 - delta + i;
+            int colorValue = 255 - delta + i;
             FeatureList fl = frames.get(i);
             for (int ii = 0; ii < featureNumbers.size(); ii++)
             {
                 Feature f = fl.features.get(featureNumbers.get(ii));
-                img.setRGB(f.x, f.y, GetRGBValue(0, greenValue, 0));
+                if (f.value >= 0)  // ignore lost features
+                {
+                    for (int xx = -1; xx < 1; xx++)
+                    {
+                        for (int yy = -1; yy < 1; yy++)
+                        {
+                            img.setRGB(f.x+xx, f.y+yy, GetRGBValue(colorValue, 0, 0));
+                        }
+                    }
+         
+                }
             }
         }
         

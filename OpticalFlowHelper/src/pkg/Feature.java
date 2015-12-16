@@ -9,5 +9,6 @@ public class Feature
     // Data members
     int x;
     int y;
+    float value;
     
 }  // end class Feature
