@@ -1,10 +1,9 @@
 EECE 7368 Project 
 ----------------------
 
-
  Overview
  --------
-todo
+The goal of this project is to convert a reference Lucas Kanade optical flow algorithm to SpecC.  The reference design is located in /ref/ while the SpecC conversion is located in /src/.
 
 
  Directory structure
@@ -17,7 +16,12 @@ todo
  Compilation
  -----------
 
- make          compile and test SpecC specification 
+ make          compile and test SpecC specification
+ 
+ Notes
+ ------------------
+ 
+ Depending on your particular experiment you will have to change the file being read in stimulus.sc and the parameters defined in main.sh.
 
 
 
