@@ -293,8 +293,14 @@ void pgmReadFile(char *fname)
   	
   		// Load the frame data
   		printf("STIMULUS::Loading frame %d\n", i);
+		
+		/* Edit the file name and path below to match your experiment! */
+		/* Also remember to set the #defines in main.sh */
+		
   		//sprintf(fnamein, "../huntington_1280/huntington_1080p_60fps_%d.pgm", i+1);
   		sprintf(fnamein, "../camera_motion_1280/camera_movement_%02d.pgm", i+1);
+		
+		// Read the data from the image
     	pgmReadFile(fnamein);
   		
   		// Notify read that data is ready

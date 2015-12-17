@@ -1,5 +1,5 @@
 #
-# Top level makefile for digicam example
+# Top level makefile for lucas kanade example
 #
 
 # include default definitions
@@ -21,10 +21,10 @@ default: spec
 all: ref spec
 
 spec: chkspecc
-	make -C src test
+	make -C src
 
 ref:
-	make -C ref test
+	make -C ref
 
 clean:
 	set -e ; for d in $(SUBDIRS); do		\
