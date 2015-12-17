@@ -17,11 +17,18 @@
 
 import "i_sender";
 import "i_receiver";
+import "i_send";
+import "i_receive";
 import "read.sc";
 import "track.sc";
-import "select.sc";
+import "c_queue";
 
-behavior Design(i_receiver bytesFromStimulus, i_sender imageBytesToMonitor, i_sender featureBytesToMonitor) 
+behavior Design(
+				unsigned char img [NUM_COLS*NUM_ROWS],
+				i_receive start,
+				i_send ready,
+				i_sender imageBytesToMonitor, 
+				i_sender featureBytesToMonitor) 
 {    
 
  const int mindist = 10;
@@ -458,19 +465,18 @@ KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
 
 	unsigned char img1 [NUM_COLS*NUM_ROWS];
 	unsigned char img2 [NUM_COLS*NUM_ROWS];
-	int frameNumber;
-	Feature tempFeature;
+	
+	// Queues between the design and the monitor
+	const unsigned long qSize = 2048;
+	c_queue dataToTrack(qSize);
 
 	// Behaviors From Imports
-  	Select select(tc, fl, img1);
-  	Read read(bytesFromStimulus, img2);
-  	Track track(tc, img1, img2, fl, frameNumber);
+  	Read read(start, ready, img, dataToTrack);
+  	Track track(tc, fl, dataToTrack, imageBytesToMonitor, featureBytesToMonitor);
 
     // Launch main behavior code
   	void main(void) 
   	{
-  		// Initialize data
-  		int nFeatures;
   		
   		// Loop variables
   		int i, ii;
@@ -480,8 +486,6 @@ KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
   		// More initialization
   		printf("Creating tracking context\n");
   		KLTCreateTrackingContext(&tc);
-  		nFeatures = NUM_FEATURES;
-  		frameNumber = 1;
   		
   		/* DEBUG, print out the Tracking Contents */
   		KLTPrintTrackingContext(&tc);
@@ -495,25 +499,8 @@ KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
   		
   		/* set this to 2 to turn on affine consistency check */
   		tc.affineConsistencyCheck = -1;  
-  		
-  		// Receive and store the first image data
-  		printf("DESIGN::Receiving first image data\n");
-  		for (i = 0; i < NUM_ROWS * NUM_COLS; i++)
-  		{
-  			bytesFromStimulus.receive(&img1[i], sizeof(char));
-  		}
-  		
-  		// Select Good Features
-  		select;
-  		
-  		// Debugging...
-  		for (i = 0 ; i < 5 ; i++)  
-  		{
-          printf("Feature #%d:  (%f,%f) with value of %d\n",
-               i, fl->feature[i]->x, fl->feature[i]->y, fl->feature[i]->val);
-     	}
   	    
-    	while(1)
+    	par
     	{      		
       		// Receive Image data
       		read;
@@ -521,26 +508,7 @@ KLT_TrackingContext KLTCreateTrackingContext(KLT_TrackingContext * tc)
       		// Track features
       		track;
       		
-      		// Send to the monitor for display
-      		printf("DESIGN::Sending image to the monitor\n");
-      		for (i = 0; i < NUM_ROWS*NUM_COLS; i++)
-  			{
-  				imageBytesToMonitor.send(&img2[i], sizeof(char));
-  			}
-  			
-  			printf("DESIGN::Sending features to the monitor\n");
-  			for (i = 0; i < NUM_FEATURES; i++)
-  			{
-  				tempFeature.x = fl->feature[i]->x;
-  				tempFeature.y = fl->feature[i]->y;
-  				tempFeature.value = fl->feature[i]->val;
-  				featureBytesToMonitor.send(&tempFeature, sizeof(Feature));
-  			}  			
-      		
-      		// Increment frame count
-      		frameNumber++;
-      		
-    	}  // end while(1)
+    	}  // end par
     
   	}  // end void main void
   

@@ -14,22 +14,30 @@
 #include "pyramid.h"
 #include "convolve.h"
 
+import "i_sender";
+import "i_receiver";
+
+import "select.sc";
+
 typedef float *_FloatWindow;
 
 behavior Track (KLT_TrackingContext g_tc, 
-				unsigned char g_img1 [NUM_COLS*NUM_ROWS],
-				unsigned char g_img2 [NUM_COLS*NUM_ROWS],
 				KLT_FeatureList g_fl,
-				int g_frameNumber) 
+				i_receiver dataFromRead,
+				i_sender imageBytesToMonitor,
+				i_sender featureBytesToMonitor) 
 {  
 	
 	
-	 /* GLOBAL VARIABLES */
- float sigma_last;
+	/* GLOBAL VARIABLES */
+ 	float sigma_last;
  
-  /* Kernels */
- ConvolutionKernel gauss_kernel;
- ConvolutionKernel gaussderiv_kernel;
+ 	unsigned char g_img1 [NUM_COLS*NUM_ROWS];
+	unsigned char g_img2 [NUM_COLS*NUM_ROWS];
+ 
+  	/* Kernels */
+ 	ConvolutionKernel gauss_kernel;
+ 	ConvolutionKernel gaussderiv_kernel;
 	
 /*********************************************************************
  * KLTError
@@ -2129,13 +2137,58 @@ void KLTTrackFeatures(
 
 }
 
-  void main(void) 
-  {
-  	sigma_last = 0.0;
-  
-     // Track features
-     KLTTrackFeatures(&g_tc, g_img1, g_img2, NUM_COLS, NUM_ROWS, g_fl);
+	// Select behavior
+	Select select(g_tc, g_fl, g_img1);
+	
+	// Temp variables
+	Feature tempFeature;
 
-  }  // end void main void
+  	void main(void) 
+  	{
+  		int i;
+  	
+  		sigma_last = 0.0;
+  		
+  		// Read first frame
+  		printf("TRACK::Receiving FIRST image data\n");
+  		for (i = 0; i < NUM_ROWS*NUM_COLS; i++)
+  		{
+  			dataFromRead.receive(&g_img1[i], sizeof(char));
+  		}
+  		
+  		// Identify good features to track
+  		select;
+  
+  		while (1)
+  		{
+  			// Receive data from the Read behavior
+  			printf("TRACK::Receiving image data\n");
+  			for (i = 0; i < NUM_ROWS*NUM_COLS; i++)
+  			{
+  				dataFromRead.receive(&g_img2[i], sizeof(char));
+  			}
+  		
+  			// Track features
+     		KLTTrackFeatures(&g_tc, g_img1, g_img2, NUM_COLS, NUM_ROWS, g_fl);
+     
+     		// Send to the monitor for display
+      		printf("DESIGN::Sending image to the monitor\n");
+      		for (i = 0; i < NUM_ROWS*NUM_COLS; i++)
+  			{
+  				imageBytesToMonitor.send(&g_img2[i], sizeof(char));
+  			}	
+  			
+  			printf("DESIGN::Sending features to the monitor\n");
+  			for (i = 0; i < NUM_FEATURES; i++)
+  			{
+  				tempFeature.x = g_fl->feature[i]->x;
+  				tempFeature.y = g_fl->feature[i]->y;
+  				tempFeature.value = g_fl->feature[i]->val;
+  				featureBytesToMonitor.send(&tempFeature, sizeof(Feature));
+  			}  			
+  		
+  		}  // end while     	
+
+  	}  // end void main void
   
 };  // end behavior

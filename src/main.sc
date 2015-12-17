@@ -15,23 +15,25 @@ import "design";
 import "monitor";
 
 import "c_queue";
+import "c_handshake";
 
 behavior Main 
 {  
 	// Global storage for frame data
-	char imageBuffer[NUM_ROWS*NUM_COLS*sizeof(unsigned char)];
+	unsigned char imageBuffer[NUM_ROWS*NUM_COLS*sizeof(unsigned char)];
 
-	// Queues between stimulus and design
-	const unsigned long qSize = 2048;
-  	c_queue bytesToDesign(qSize);
-	
 	// Queues between the design and the monitor
+	const unsigned long qSize = 2048;
 	c_queue imageBytesToMonitor(qSize);
 	c_queue featureBytesToMonitor(qSize);
+	
+	// Handshakes for synchronization
+	c_handshake start;
+	c_handshake ready;
 
     // Behaviors
-  	Stimulus stimulus(imageBuffer, bytesToDesign);
-	Design design(bytesToDesign, imageBytesToMonitor, featureBytesToMonitor);
+  	Stimulus stimulus(imageBuffer, start, ready);
+	Design design(imageBuffer, start, ready, imageBytesToMonitor, featureBytesToMonitor);
   	Monitor monitor(imageBytesToMonitor, featureBytesToMonitor);
 
 	// Main application entry point

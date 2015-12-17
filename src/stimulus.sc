@@ -8,10 +8,13 @@
 /* Our common defines */
 #include "main.sh"
 
-import "i_sender";
+import "i_receive";
+import "i_send";
 
-behavior Stimulus(char imageBuffer[NUM_ROWS*NUM_COLS*sizeof(unsigned char)], 
-	i_sender bytesToDesign)
+behavior Stimulus(
+	unsigned char imageBuffer[NUM_ROWS*NUM_COLS*sizeof(unsigned char)], 
+	i_send start,
+	i_receive ready)
 {  
 
 /* Standard includes */
@@ -285,21 +288,22 @@ void pgmReadFile(char *fname)
   	// Loop over all frames
   	for (i = 0; i < NUM_FRAMES + 1; i++)
   	{
+  		// Wait for sync from Read behavior
+  		ready.receive(); 
+  	
   		// Load the frame data
   		printf("STIMULUS::Loading frame %d\n", i);
-  		sprintf(fnamein, "../huntington_1280/huntington_1080p_60fps_%d.pgm", i+1);
+  		//sprintf(fnamein, "../huntington_1280/huntington_1080p_60fps_%d.pgm", i+1);
+  		sprintf(fnamein, "../camera_motion_1280/camera_movement_%02d.pgm", i+1);
     	pgmReadFile(fnamein);
   		
-  		// Send the to queue
-  		printf("STIMULUS::Sending data to Design, %d\n", i);
-  		for (ii = 0; ii < NUM_ROWS*NUM_COLS; ii++)
-  		{
-  			bytesToDesign.send(&imageBuffer[ii], sizeof(char));
-  		}  // end of loading the queue
+  		// Notify read that data is ready
+  		start.send();
   		
   	}  // end for each frame
 	
     return;
-  }
+    
+  }  // end void main
 
 };  // end behavior
