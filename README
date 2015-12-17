@@ -23,6 +23,18 @@ The goal of this project is to convert a reference Lucas Kanade optical flow alg
  
  Depending on your particular experiment you will have to change the file being read in stimulus.sc and the parameters defined in main.sh.
 
+Optical Flow Helper
+----------------------
+
+This Java application was built to help us generate results files.  You will need to convert the input image data to a PNG.
+
+* Select the image file you would like to use.  The program will look in the same folder for feature data file.
+* In the frame selection text field enter a comma separated list of feature numbers you would like to isolate and view over time.
+* The Start and stop filed will let the application know what frames to look at.
+
+If all goes well, a final image, output.png will be generated in the same directory as your executable and will overlay selected feature data onto your image.
+
+This application was built quickly so please pardon the lack of proper error handling.  I highly recommend running it in an IDE like Netbeans if you are having issues.
 
 
 
